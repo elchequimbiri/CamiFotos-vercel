@@ -9,7 +9,9 @@ import {
   Sparkles, 
   FolderPlus,
   ArrowUpRight,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Download,
+  FileArchive
 } from 'lucide-react';
 
 interface GalleriesViewProps {
@@ -17,6 +19,8 @@ interface GalleriesViewProps {
   session: UserSession;
   onSelectGallery: (gallery: Gallery) => void;
   onOpenCreateGallery: () => void;
+  onDownloadAllZip?: () => void;
+  onDownloadGalleryZip?: (gallery: Gallery) => void;
   isLoading: boolean;
 }
 
@@ -25,6 +29,8 @@ export const GalleriesView: React.FC<GalleriesViewProps> = ({
   session,
   onSelectGallery,
   onOpenCreateGallery,
+  onDownloadAllZip,
+  onDownloadGalleryZip,
   isLoading,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -62,8 +68,20 @@ export const GalleriesView: React.FC<GalleriesViewProps> = ({
             </p>
           </div>
 
-          {/* Quick stats or Admin add button */}
-          <div className="flex items-center space-x-3 shrink-0">
+          {/* Quick stats, download all or Admin add button */}
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+            {galleries.length > 0 && onDownloadAllZip && (
+              <button
+                id="download-all-zip-button"
+                onClick={onDownloadAllZip}
+                className="inline-flex items-center space-x-2 bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-200 hover:text-white font-medium text-xs sm:text-sm px-3.5 py-2.5 rounded-xl transition-all shadow-sm cursor-pointer"
+                title="Descargar todas las fotos de todas las galerías en un archivo .ZIP organizado"
+              >
+                <Download className="w-4 h-4 text-amber-400" />
+                <span>Descargar Todas (.ZIP)</span>
+              </button>
+            )}
+
             {isAdmin && (
               <button
                 id="create-gallery-button"
@@ -244,10 +262,27 @@ export const GalleriesView: React.FC<GalleriesViewProps> = ({
                         <Calendar className="w-3 h-3 text-zinc-600" />
                         <span>{gallery.dateCreated}</span>
                       </span>
-                      <span className="flex items-center space-x-1 text-zinc-400">
-                        <Eye className="w-3 h-3 text-zinc-600" />
-                        <span>{gallery.viewsCount || 0} visitas</span>
-                      </span>
+
+                      <div className="flex items-center space-x-3">
+                        {onDownloadGalleryZip && gallery.photos.length > 0 && (
+                          <button
+                            id={`download-zip-card-${gallery.id}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onDownloadGalleryZip(gallery);
+                            }}
+                            className="inline-flex items-center space-x-1 text-zinc-400 hover:text-amber-400 transition-colors p-1 -m-1 rounded hover:bg-zinc-800/60"
+                            title={`Descargar ${gallery.photos.length} fotos de "${gallery.name}" en .ZIP`}
+                          >
+                            <Download className="w-3 h-3" />
+                            <span className="text-[10px] font-mono font-medium">.ZIP</span>
+                          </button>
+                        )}
+                        <span className="flex items-center space-x-1 text-zinc-400">
+                          <Eye className="w-3 h-3 text-zinc-600" />
+                          <span>{gallery.viewsCount || 0}</span>
+                        </span>
+                      </div>
                     </div>
 
                   </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { UserSession, Gallery, Photo } from './types';
 import { api } from './lib/api';
+import { downloadGalleryAsZip, downloadAllGalleriesAsZip } from './lib/zipDownload';
 import { LoginView } from './components/LoginView';
 import { Navbar } from './components/Navbar';
 import { GalleriesView } from './components/GalleriesView';
@@ -9,6 +10,7 @@ import { LightboxModal } from './components/LightboxModal';
 import { AdminPanelModal } from './components/AdminPanelModal';
 import { AccessStatsModal } from './components/AccessStatsModal';
 import { PublishingGuideModal } from './components/PublishingGuideModal';
+import { ZipDownloadModal, ZipDownloadState } from './components/ZipDownloadModal';
 
 export default function App() {
   const [session, setSession] = useState<UserSession | null>(() => api.getStoredSession());
@@ -23,6 +25,18 @@ export default function App() {
   const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [showStatsModal, setShowStatsModal] = useState(false);
   const [showPublishingGuide, setShowPublishingGuide] = useState(false);
+
+  // ZIP Download State
+  const [zipState, setZipState] = useState<ZipDownloadState>({
+    isOpen: false,
+    title: '',
+    totalPhotos: 0,
+    currentPhoto: 0,
+    percent: 0,
+    statusText: '',
+    isComplete: false,
+    error: null,
+  });
 
   // Load galleries when session is active
   const loadGalleries = async () => {
@@ -123,6 +137,93 @@ export default function App() {
     }
   };
 
+  const handleDownloadGalleryZip = async (gallery: Gallery) => {
+    if (!gallery.photos || gallery.photos.length === 0) {
+      alert('La galería no contiene fotografías para descargar.');
+      return;
+    }
+
+    setZipState({
+      isOpen: true,
+      title: `${gallery.name} (${gallery.photos.length} fotos)`,
+      totalPhotos: gallery.photos.length,
+      currentPhoto: 0,
+      percent: 0,
+      statusText: 'Preparando archivo .ZIP...',
+      isComplete: false,
+      error: null,
+    });
+
+    try {
+      await downloadGalleryAsZip(gallery, (progress) => {
+        setZipState((prev) => ({
+          ...prev,
+          currentPhoto: progress.current,
+          totalPhotos: progress.total,
+          percent: progress.percent,
+          statusText: progress.statusText,
+        }));
+      });
+
+      setZipState((prev) => ({
+        ...prev,
+        percent: 100,
+        statusText: '¡Descarga completada con éxito!',
+        isComplete: true,
+      }));
+    } catch (err: any) {
+      console.error('Error in ZIP download:', err);
+      setZipState((prev) => ({
+        ...prev,
+        error: err.message || 'Ocurrió un problema al descargar las fotos.',
+      }));
+    }
+  };
+
+  const handleDownloadAllZip = async () => {
+    const totalPhotos = galleries.reduce((acc, g) => acc + (g.photos ? g.photos.length : 0), 0);
+    if (totalPhotos === 0) {
+      alert('No hay fotografías disponibles para descargar.');
+      return;
+    }
+
+    setZipState({
+      isOpen: true,
+      title: `Colección Completa (${galleries.length} galerías, ${totalPhotos} fotos)`,
+      totalPhotos,
+      currentPhoto: 0,
+      percent: 0,
+      statusText: 'Preparando descarga de todas las fotografías...',
+      isComplete: false,
+      error: null,
+    });
+
+    try {
+      await downloadAllGalleriesAsZip(galleries, (progress) => {
+        setZipState((prev) => ({
+          ...prev,
+          currentPhoto: progress.current,
+          totalPhotos: progress.total,
+          percent: progress.percent,
+          statusText: progress.statusText,
+        }));
+      });
+
+      setZipState((prev) => ({
+        ...prev,
+        percent: 100,
+        statusText: '¡Descarga completa finalizada!',
+        isComplete: true,
+      }));
+    } catch (err: any) {
+      console.error('Error in full ZIP download:', err);
+      setZipState((prev) => ({
+        ...prev,
+        error: err.message || 'Ocurrió un problema al descargar la colección.',
+      }));
+    }
+  };
+
   // If unauthenticated: show login view
   if (!session) {
     return <LoginView onLoginSuccess={handleLoginSuccess} />;
@@ -149,6 +250,8 @@ export default function App() {
           session={session}
           onSelectGallery={handleSelectGallery}
           onOpenCreateGallery={() => setShowAdminPanel(true)}
+          onDownloadAllZip={handleDownloadAllZip}
+          onDownloadGalleryZip={handleDownloadGalleryZip}
           isLoading={isLoading}
         />
       )}
@@ -163,6 +266,7 @@ export default function App() {
           onOpenAddPhoto={() => setShowAdminPanel(true)}
           onDeletePhoto={handleDeletePhoto}
           onSetCoverPhoto={handleSetCoverPhoto}
+          onDownloadZip={handleDownloadGalleryZip}
         />
       )}
 
@@ -181,6 +285,7 @@ export default function App() {
             }
           }}
           isAutoSlideshow={isAutoSlideshow}
+          onDownloadGalleryZip={() => handleDownloadGalleryZip(selectedGallery)}
         />
       )}
 
@@ -208,6 +313,12 @@ export default function App() {
           onClose={() => setShowPublishingGuide(false)}
         />
       )}
+
+      {/* Zip Download Progress Modal */}
+      <ZipDownloadModal
+        state={zipState}
+        onClose={() => setZipState((prev) => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 }

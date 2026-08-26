@@ -9,7 +9,8 @@ import {
   ZoomIn, 
   ZoomOut, 
   Maximize2, 
-  Minimize2
+  Minimize2,
+  Download
 } from 'lucide-react';
 
 interface LightboxModalProps {
@@ -20,6 +21,7 @@ interface LightboxModalProps {
   onClose: () => void;
   onNavigate: (index: number) => void;
   isAutoSlideshow?: boolean;
+  onDownloadGalleryZip?: () => void;
 }
 
 export const LightboxModal: React.FC<LightboxModalProps> = ({
@@ -29,6 +31,7 @@ export const LightboxModal: React.FC<LightboxModalProps> = ({
   onClose,
   onNavigate,
   isAutoSlideshow = false,
+  onDownloadGalleryZip,
 }) => {
   const [isPlaying, setIsPlaying] = useState(isAutoSlideshow);
   const [showFilmstrip] = useState(true);
@@ -153,6 +156,32 @@ export const LightboxModal: React.FC<LightboxModalProps> = ({
           >
             {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
           </button>
+
+          {/* Download Current Photo */}
+          <a
+            id="lightbox-download-photo"
+            href={currentPhoto.url}
+            download={currentPhoto.filename || `${currentPhoto.title}.jpg`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-2 rounded-lg text-zinc-300 hover:text-white hover:bg-zinc-800/80 transition-colors cursor-pointer"
+            title="Descargar esta foto en alta resolución"
+          >
+            <Download className="w-4 h-4" />
+          </a>
+
+          {/* Download Entire Gallery ZIP */}
+          {onDownloadGalleryZip && (
+            <button
+              id="lightbox-download-gallery-zip"
+              onClick={onDownloadGalleryZip}
+              className="hidden sm:inline-flex items-center space-x-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-amber-300 bg-amber-950/40 hover:bg-amber-900/50 border border-amber-800/50 transition-colors cursor-pointer"
+              title="Descargar todas las fotos de esta galería en .ZIP"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>.ZIP</span>
+            </button>
+          )}
 
           {/* Close button */}
           <button

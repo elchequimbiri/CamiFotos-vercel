@@ -12,7 +12,9 @@ import {
   Trash2, 
   Star,
   Info,
-  Eye
+  Eye,
+  Download,
+  FileArchive
 } from 'lucide-react';
 
 interface GalleryDetailViewProps {
@@ -24,6 +26,7 @@ interface GalleryDetailViewProps {
   onOpenAddPhoto: () => void;
   onDeletePhoto?: (photoId: string) => void;
   onSetCoverPhoto?: (photoId: string) => void;
+  onDownloadZip?: (gallery: Gallery) => void;
 }
 
 export const GalleryDetailView: React.FC<GalleryDetailViewProps> = ({
@@ -35,6 +38,7 @@ export const GalleryDetailView: React.FC<GalleryDetailViewProps> = ({
   onOpenAddPhoto,
   onDeletePhoto,
   onSetCoverPhoto,
+  onDownloadZip,
 }) => {
   const [layoutMode, setLayoutMode] = useState<'masonry' | 'grid'>('masonry');
   const [hoveredPhotoId, setHoveredPhotoId] = useState<string | null>(null);
@@ -60,15 +64,27 @@ export const GalleryDetailView: React.FC<GalleryDetailViewProps> = ({
           {/* Action buttons */}
           <div className="flex items-center space-x-2">
             {gallery.photos.length > 0 && (
-              <button
-                id="start-slideshow-button"
-                onClick={onStartSlideshow}
-                className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800 text-xs text-zinc-200 font-medium transition-all cursor-pointer shadow-sm"
-                title="Iniciar pase de diapositivas a pantalla completa"
-              >
-                <Play className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                <span className="hidden sm:inline">Pase de Diapositivas</span>
-              </button>
+              <>
+                <button
+                  id="download-gallery-zip-button"
+                  onClick={() => onDownloadZip?.(gallery)}
+                  className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800 text-xs text-zinc-200 font-medium transition-all cursor-pointer shadow-sm hover:border-zinc-700"
+                  title="Descargar todas las fotos de esta galería en un archivo .ZIP comprimido"
+                >
+                  <Download className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="inline">Descargar .ZIP</span>
+                </button>
+
+                <button
+                  id="start-slideshow-button"
+                  onClick={onStartSlideshow}
+                  className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800 text-xs text-zinc-200 font-medium transition-all cursor-pointer shadow-sm"
+                  title="Iniciar pase de diapositivas a pantalla completa"
+                >
+                  <Play className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                  <span className="hidden sm:inline">Pase de Diapositivas</span>
+                </button>
+              </>
             )}
 
             {/* Layout switch */}
