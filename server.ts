@@ -5,7 +5,7 @@ import crypto from 'crypto';
 import dotenv from 'dotenv';
 import { createServer as createViteServer } from 'vite';
 import { Gallery, Photo, AccessLog, UserRole, AccessStatsSummary } from './src/types';
-import { INITIAL_GALLERIES, INITIAL_LOGS } from './server/initialData';
+import { INITIAL_GALLERIES, INITIAL_LOGS } from './src/data/initialData';
 
 dotenv.config();
 
