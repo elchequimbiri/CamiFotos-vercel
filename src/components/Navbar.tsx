@@ -1,7 +1,7 @@
 import React from 'react';
 import { UserSession } from '../types';
 import { 
-  Camera, 
+  Sprout, 
   Shield, 
   Heart, 
   LogOut, 
@@ -58,8 +58,8 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={onBackToGalleries}
               className="flex items-center space-x-3 cursor-pointer group"
             >
-              <div className="w-9 h-9 rounded-xl bg-zinc-900 border border-zinc-700/80 flex items-center justify-center text-amber-400 group-hover:border-amber-400/50 transition-colors shadow-sm">
-                <Camera className="w-5 h-5" />
+              <div className="w-9 h-9 rounded-xl bg-emerald-950/60 border border-emerald-800/80 flex items-center justify-center text-emerald-400 group-hover:border-emerald-400/70 group-hover:bg-emerald-900/50 transition-all shadow-sm">
+                <Sprout className="w-5 h-5 text-emerald-400" />
               </div>
               <div className="flex flex-col">
                 <div className="flex items-center space-x-2">

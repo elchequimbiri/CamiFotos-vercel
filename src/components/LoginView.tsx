@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Lock, ArrowRight, Shield, Heart, Eye, EyeOff, AlertCircle, Key } from 'lucide-react';
+import { Lock, ArrowRight, Shield, Heart, Eye, EyeOff, AlertCircle, Key, Sprout } from 'lucide-react';
 import { UserSession } from '../types';
 import { api } from '../lib/api';
-import portadaImg from '../assets/images/portada_cami_sunset_1787695138706.jpg';
+
+const DEFAULT_COVER_IMAGE = 'https://images.unsplash.com/photo-1517411032315-54ef2cb783bb?auto=format&fit=crop&w=2400&q=85';
 
 interface LoginViewProps {
   onLoginSuccess: (session: UserSession) => void;
@@ -42,7 +43,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
         <div 
           className="absolute inset-0 bg-cover bg-[center_top_15%] sm:bg-center transition-transform duration-1000 ease-out scale-100"
           style={{
-            backgroundImage: `url(${portadaImg})`,
+            backgroundImage: `url(${DEFAULT_COVER_IMAGE})`,
           }}
         />
         
@@ -53,7 +54,9 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
         {/* Top bar branding inside cover */}
         <div className="relative z-20 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <span className="h-2 w-2 rounded-full bg-amber-400/90 ring-4 ring-amber-400/20 animate-pulse" />
+            <div className="w-8 h-8 rounded-lg bg-emerald-950/70 border border-emerald-700/60 flex items-center justify-center text-emerald-400 shadow-sm">
+              <Sprout className="w-4 h-4 text-emerald-400" />
+            </div>
             <span className="text-xs uppercase tracking-[0.25em] text-zinc-200 font-medium drop-shadow">
               Archivo Privado de Fotografía
             </span>
@@ -62,9 +65,14 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
 
         {/* Bottom title overlay on cover */}
         <div className="relative z-20 mt-auto max-w-xl">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-light tracking-tight text-white font-serif leading-tight drop-shadow-md">
-            Cami Fotos
-          </h1>
+          <div className="flex items-center space-x-3 mb-2">
+            <div className="w-10 h-10 rounded-xl bg-emerald-950/80 border border-emerald-800/80 flex items-center justify-center shadow-lg">
+              <Sprout className="w-6 h-6 text-emerald-400" />
+            </div>
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-light tracking-tight text-white font-serif leading-tight drop-shadow-md">
+              Cami Fotos
+            </h1>
+          </div>
           <p className="text-sm sm:text-base text-zinc-300 font-light mt-1.5 tracking-wider drop-shadow">
             Una historia en imágenes
           </p>
@@ -77,8 +85,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
           
           {/* Header */}
           <div className="space-y-2">
-            <div className="w-10 h-10 rounded-xl bg-zinc-800/90 border border-zinc-700/60 flex items-center justify-center text-amber-400 shadow-inner mb-4">
-              <Lock className="w-5 h-5" />
+            <div className="w-11 h-11 rounded-xl bg-emerald-950/50 border border-emerald-800/70 flex items-center justify-center text-emerald-400 shadow-inner mb-4">
+              <Sprout className="w-5 h-5 text-emerald-400" />
             </div>
             <h2 className="text-2xl sm:text-3xl font-normal text-white tracking-tight font-serif">
               Acceso a la Galería
