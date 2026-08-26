@@ -249,6 +249,25 @@ app.get('/api/auth/info', (req: Request, res: Response) => {
   });
 });
 
+// ==================== APP COVER PHOTO API ====================
+let appCoverPhotoUrl: string | null = null;
+
+// Get current App Cover Photo (Public)
+app.get('/api/cover-photo', (req: Request, res: Response) => {
+  res.json({ coverPhoto: appCoverPhotoUrl });
+});
+
+// Update App Cover Photo (Admin only)
+app.post('/api/cover-photo', requireAdmin, (req: AuthRequest, res: Response) => {
+  const { url } = req.body;
+  if (!url || typeof url !== 'string') {
+    return res.status(400).json({ error: 'Se requiere una URL o imagen válida para la portada.' });
+  }
+  appCoverPhotoUrl = url;
+  recordLog('admin', 'admin_action', undefined, undefined, 'Foto de portada de inicio actualizada');
+  res.json({ success: true, coverPhoto: appCoverPhotoUrl });
+});
+
 // ==================== GALLERIES API (Protected) ====================
 
 // List all galleries

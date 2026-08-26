@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Gallery, Photo } from '../types';
 import { 
   X, 
@@ -13,15 +13,19 @@ import {
   Camera,
   Image as ImageIcon,
   Folder,
-  SlidersHorizontal
+  SlidersHorizontal,
+  RotateCcw,
+  Sparkles
 } from 'lucide-react';
 import { api } from '../lib/api';
+import { PRESET_COVERS, getStoredCoverPhoto } from '../lib/coverManager';
 
 interface AdminPanelModalProps {
   galleries: Gallery[];
   activeGalleryId?: string;
   onClose: () => void;
   onRefreshGalleries: () => Promise<void>;
+  onUpdateAppCover?: (url: string) => void;
 }
 
 export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
@@ -29,11 +33,17 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   activeGalleryId,
   onClose,
   onRefreshGalleries,
+  onUpdateAppCover,
 }) => {
   const [selectedGalleryId, setSelectedGalleryId] = useState<string>(
     activeGalleryId || (galleries[0]?.id || '')
   );
-  const [tab, setTab] = useState<'photos' | 'edit_gallery' | 'new_gallery'>('photos');
+  const [tab, setTab] = useState<'photos' | 'new_gallery' | 'cover'>('photos');
+
+  // Cover photo state
+  const [activeCoverPhoto, setActiveCoverPhoto] = useState<string>(() => getStoredCoverPhoto());
+  const [previewCoverPhoto, setPreviewCoverPhoto] = useState<string>('');
+  const [coverGalleryFilter, setCoverGalleryFilter] = useState<string>(galleries[0]?.id || '');
 
   // Form states for New Gallery
   const [newGalName, setNewGalName] = useState('');
@@ -51,13 +61,19 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const selectedGallery = galleries.find(g => g.id === selectedGalleryId);
+  const filterGalleryForCover = galleries.find(g => g.id === coverGalleryFilter);
 
-  // Handle local image file upload (converts to base64 / Data URL)
+  useEffect(() => {
+    api.getAppCoverPhoto().then((url) => {
+      if (url) setActiveCoverPhoto(url);
+    });
+  }, []);
+
+  // Handle local image file upload for gallery photo
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Auto-fill title if empty
     if (!photoTitle) {
       const nameClean = file.name.replace(/\.[^/.]+$/, '').replace(/_/g, ' ');
       setPhotoTitle(nameClean);
@@ -70,6 +86,65 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
       }
     };
     reader.readAsDataURL(file);
+  };
+
+  // Handle cover photo file upload
+  const handleCoverUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (loadEvt) => {
+      if (typeof loadEvt.target?.result === 'string') {
+        setPreviewCoverPhoto(loadEvt.target.result);
+        setStatusMessage({ type: 'success', text: 'Imagen cargada para vista previa. Haga clic en "Guardar como Portada Principal" para confirmar.' });
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Save Cover Photo
+  const handleSaveCoverPhoto = async (targetUrl?: string) => {
+    const urlToSave = targetUrl || previewCoverPhoto;
+    if (!urlToSave) {
+      setStatusMessage({ type: 'error', text: 'Seleccione una imagen o archivo primero.' });
+      return;
+    }
+
+    setIsLoading(true);
+    setStatusMessage(null);
+
+    try {
+      await api.setAppCoverPhoto(urlToSave);
+      setActiveCoverPhoto(urlToSave);
+      setPreviewCoverPhoto('');
+      if (onUpdateAppCover) {
+        onUpdateAppCover(urlToSave);
+      }
+      setStatusMessage({ type: 'success', text: 'Foto de portada principal de inicio actualizada exitosamente.' });
+    } catch (err: any) {
+      setStatusMessage({ type: 'error', text: err.message || 'Error al actualizar la foto de portada.' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Reset Cover Photo
+  const handleResetCover = async () => {
+    setIsLoading(true);
+    try {
+      const def = await api.resetAppCoverPhoto();
+      setActiveCoverPhoto(def);
+      setPreviewCoverPhoto('');
+      if (onUpdateAppCover) {
+        onUpdateAppCover(def);
+      }
+      setStatusMessage({ type: 'success', text: 'Foto de portada restablecida a la predeterminada.' });
+    } catch (err: any) {
+      setStatusMessage({ type: 'error', text: err.message || 'Error al restablecer la portada.' });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Create Gallery
@@ -252,6 +327,17 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
             }`}
           >
             Crear Nueva Galería
+          </button>
+          <button
+            onClick={() => { setTab('cover'); setStatusMessage(null); }}
+            className={`pb-2.5 px-3 text-xs font-medium border-b-2 transition-all cursor-pointer flex items-center space-x-1.5 ${
+              tab === 'cover' 
+                ? 'border-amber-400 text-amber-300' 
+                : 'border-transparent text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            <ImageIcon className="w-3.5 h-3.5" />
+            <span>Foto de Portada</span>
           </button>
         </div>
 
@@ -477,6 +563,220 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                 {isLoading ? 'Creando...' : 'Crear Galería'}
               </button>
             </form>
+          )}
+
+          {tab === 'cover' && (
+            <div className="space-y-8 py-2">
+              
+              {/* Header explanation */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-zinc-900/60 border border-zinc-800">
+                <div className="space-y-1">
+                  <h3 className="text-sm font-medium text-white flex items-center space-x-2">
+                    <ImageIcon className="w-4 h-4 text-emerald-400" />
+                    <span>Portada Principal de la Aplicación</span>
+                  </h3>
+                  <p className="text-xs text-zinc-400">
+                    Esta imagen se muestra en pantalla completa en el acceso y bienvenida de Cami Fotos.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleResetCover}
+                  disabled={isLoading}
+                  className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-zinc-950 hover:bg-zinc-900 border border-zinc-700 text-zinc-300 hover:text-white text-xs cursor-pointer transition-colors"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Restablecer predeterminada</span>
+                </button>
+              </div>
+
+              {/* Current Active Cover & Upload Block */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                {/* Current Active Preview */}
+                <div className="p-4 rounded-xl bg-zinc-900/40 border border-zinc-800 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium uppercase tracking-wider text-emerald-400 flex items-center space-x-1.5">
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Portada Activa en el Sitio</span>
+                    </span>
+                    <span className="text-[10px] text-zinc-400 bg-zinc-950 px-2 py-0.5 rounded border border-zinc-800">
+                      En vivo
+                    </span>
+                  </div>
+
+                  <div className="relative aspect-[16/10] sm:aspect-video rounded-xl overflow-hidden border border-zinc-700 bg-zinc-950 shadow-inner">
+                    <img 
+                      src={activeCoverPhoto} 
+                      alt="Portada activa" 
+                      className="w-full h-full object-cover" 
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
+                    <div className="absolute bottom-3 left-3 right-3 text-left">
+                      <p className="text-xs font-serif text-white font-medium drop-shadow">Cami Fotos</p>
+                      <p className="text-[10px] text-zinc-300 drop-shadow">Archivo Privado de Fotografía</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Upload New Custom Cover */}
+                <div className="p-4 rounded-xl bg-zinc-900/40 border border-zinc-800 space-y-4 flex flex-col justify-between">
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-2 text-xs font-medium uppercase tracking-wider text-amber-400">
+                      <Upload className="w-4 h-4" />
+                      <span>Subir Nueva Foto desde tu Dispositivo</span>
+                    </div>
+
+                    <p className="text-xs text-zinc-400">
+                      Selecciona una fotografía en alta resolución (.jpg, .jpeg, .png o .webp) desde tu ordenador o móvil.
+                    </p>
+
+                    <div className="space-y-2">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleCoverUpload}
+                        className="w-full text-xs text-zinc-400 file:mr-3 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-amber-500/20 file:text-amber-300 hover:file:bg-amber-500/30 cursor-pointer bg-zinc-950 border border-zinc-800 rounded-xl p-2"
+                      />
+                    </div>
+
+                    {previewCoverPhoto && (
+                      <div className="space-y-2 pt-1">
+                        <div className="flex items-center justify-between text-[11px] text-zinc-300">
+                          <span>Vista previa de la nueva imagen:</span>
+                          <span className="text-amber-400">Sin guardar aún</span>
+                        </div>
+                        <div className="relative aspect-video max-h-36 rounded-lg overflow-hidden border border-amber-500/50 bg-zinc-950">
+                          <img src={previewCoverPhoto} alt="Nueva portada" className="w-full h-full object-cover" />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {previewCoverPhoto && (
+                    <button
+                      type="button"
+                      onClick={() => handleSaveCoverPhoto()}
+                      disabled={isLoading}
+                      className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 font-medium py-2.5 px-4 rounded-xl transition-all shadow-md cursor-pointer text-xs font-sans mt-2"
+                    >
+                      {isLoading ? 'Guardando...' : 'Confirmar y Guardar como Portada Principal'}
+                    </button>
+                  )}
+                </div>
+
+              </div>
+
+              {/* Predefined / Official Preset Options */}
+              <div className="space-y-3">
+                <div className="flex items-center space-x-2 text-xs font-medium uppercase tracking-wider text-zinc-300">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Portadas Predefinidas y Oficiales</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {PRESET_COVERS.map((preset) => {
+                    const isCurrent = activeCoverPhoto === preset.url;
+                    return (
+                      <div 
+                        key={preset.id}
+                        className={`group relative rounded-xl overflow-hidden border transition-all ${
+                          isCurrent 
+                            ? 'border-emerald-500/80 ring-2 ring-emerald-500/30 bg-emerald-950/20' 
+                            : 'border-zinc-800 hover:border-zinc-700 bg-zinc-950'
+                        }`}
+                      >
+                        <div className="aspect-[16/10] overflow-hidden bg-zinc-900 relative">
+                          <img 
+                            src={preset.url} 
+                            alt={preset.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                          />
+                          {isCurrent && (
+                            <span className="absolute top-2 right-2 bg-emerald-600 text-white text-[10px] font-medium px-2 py-0.5 rounded shadow">
+                              Activa
+                            </span>
+                          )}
+                        </div>
+                        <div className="p-3 flex items-center justify-between">
+                          <span className="text-xs text-zinc-200 truncate pr-2 font-medium">
+                            {preset.name}
+                          </span>
+                          {!isCurrent && (
+                            <button
+                              type="button"
+                              onClick={() => handleSaveCoverPhoto(preset.url)}
+                              disabled={isLoading}
+                              className="text-[11px] font-medium text-amber-400 hover:text-amber-300 px-2 py-1 rounded bg-zinc-900 border border-zinc-700 hover:border-amber-400 cursor-pointer transition-colors shrink-0"
+                            >
+                              Aplicar
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Select photo from Existing Galleries */}
+              <div className="p-4 rounded-xl bg-zinc-900/30 border border-zinc-800 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="flex items-center space-x-2 text-xs font-medium uppercase tracking-wider text-zinc-300">
+                    <Camera className="w-3.5 h-3.5 text-amber-400" />
+                    <span>O seleccionar una foto de tus colecciones existentes:</span>
+                  </div>
+
+                  <select
+                    value={coverGalleryFilter}
+                    onChange={(e) => setCoverGalleryFilter(e.target.value)}
+                    className="bg-zinc-950 border border-zinc-700 text-xs text-zinc-200 rounded-lg px-2.5 py-1 outline-none focus:border-amber-400"
+                  >
+                    {galleries.map(g => (
+                      <option key={g.id} value={g.id}>
+                        {g.name} ({g.photos.length} fotos)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {filterGalleryForCover && filterGalleryForCover.photos.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2.5 pt-1 max-h-56 overflow-y-auto">
+                    {filterGalleryForCover.photos.map((photo) => {
+                      const isCurrent = activeCoverPhoto === photo.url;
+                      return (
+                        <div 
+                          key={photo.id}
+                          onClick={() => handleSaveCoverPhoto(photo.url)}
+                          className={`group relative aspect-square rounded-lg overflow-hidden border cursor-pointer transition-all ${
+                            isCurrent 
+                              ? 'border-emerald-500 ring-2 ring-emerald-500/40' 
+                              : 'border-zinc-800 hover:border-amber-400 hover:opacity-90'
+                          }`}
+                        >
+                          <img src={photo.thumbnailUrl || photo.url} alt={photo.title} className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col justify-end p-1.5 transition-opacity">
+                            <span className="text-[10px] text-white font-medium truncate">{photo.title}</span>
+                            <span className="text-[9px] text-amber-300 font-semibold">Usar portada</span>
+                          </div>
+                          {isCurrent && (
+                            <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-emerald-500 text-white flex items-center justify-center">
+                              <Check className="w-2.5 h-2.5" />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-xs text-zinc-500 py-3 text-center">
+                    Esta galería no contiene fotografías disponibles.
+                  </p>
+                )}
+              </div>
+
+            </div>
           )}
 
         </div>

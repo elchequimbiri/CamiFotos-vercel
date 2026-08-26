@@ -1,18 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Lock, ArrowRight, Shield, Heart, Eye, EyeOff, AlertCircle, Key, Sprout } from 'lucide-react';
 import { UserSession } from '../types';
 import { api } from '../lib/api';
-import portadaCamiSunset from '../assets/images/portada_cami_sunset_1787786938649.jpg';
+import { getStoredCoverPhoto } from '../lib/coverManager';
 
 interface LoginViewProps {
   onLoginSuccess: (session: UserSession) => void;
+  coverPhotoUrl?: string;
 }
 
-export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
+export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, coverPhotoUrl }) => {
+  const [currentCover, setCurrentCover] = useState<string>(() => coverPhotoUrl || getStoredCoverPhoto());
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  useEffect(() => {
+    if (coverPhotoUrl) {
+      setCurrentCover(coverPhotoUrl);
+    } else {
+      api.getAppCoverPhoto().then((url) => {
+        if (url) setCurrentCover(url);
+      });
+    }
+  }, [coverPhotoUrl]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,7 +54,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
         <div 
           className="absolute inset-0 bg-cover bg-[center_top_20%] sm:bg-center transition-transform duration-1000 ease-out scale-100"
           style={{
-            backgroundImage: `url(${portadaCamiSunset})`,
+            backgroundImage: `url(${currentCover})`,
           }}
         />
         

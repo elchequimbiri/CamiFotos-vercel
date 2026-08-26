@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { UserSession, Gallery, Photo } from './types';
 import { api } from './lib/api';
+import { getStoredCoverPhoto } from './lib/coverManager';
 import { downloadGalleryAsZip, downloadAllGalleriesAsZip } from './lib/zipDownload';
 import { LoginView } from './components/LoginView';
 import { Navbar } from './components/Navbar';
@@ -18,6 +19,14 @@ export default function App() {
   const [selectedGallery, setSelectedGallery] = useState<Gallery | null>(null);
   const [currentView, setCurrentView] = useState<'galleries' | 'gallery_detail'>('galleries');
   const [isLoading, setIsLoading] = useState(false);
+  const [appCoverPhoto, setAppCoverPhoto] = useState<string>(() => getStoredCoverPhoto());
+
+  // Load app cover photo
+  useEffect(() => {
+    api.getAppCoverPhoto().then((url) => {
+      if (url) setAppCoverPhoto(url);
+    });
+  }, []);
 
   // Modals state
   const [activeLightboxIndex, setActiveLightboxIndex] = useState<number | null>(null);
@@ -226,7 +235,12 @@ export default function App() {
 
   // If unauthenticated: show login view
   if (!session) {
-    return <LoginView onLoginSuccess={handleLoginSuccess} />;
+    return (
+      <LoginView 
+        onLoginSuccess={handleLoginSuccess} 
+        coverPhotoUrl={appCoverPhoto}
+      />
+    );
   }
 
   return (
@@ -296,6 +310,7 @@ export default function App() {
           activeGalleryId={selectedGallery?.id}
           onClose={() => setShowAdminPanel(false)}
           onRefreshGalleries={loadGalleries}
+          onUpdateAppCover={(newUrl) => setAppCoverPhoto(newUrl)}
         />
       )}
 

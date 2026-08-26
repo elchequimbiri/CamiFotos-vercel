@@ -1,5 +1,6 @@
 import { Gallery, Photo, UserSession, AccessStatsSummary, AccessLog, UserRole } from '../types';
 import { INITIAL_GALLERIES, INITIAL_LOGS } from '../data/initialData';
+import { getStoredCoverPhoto, saveStoredCoverPhoto, resetStoredCoverPhoto } from './coverManager';
 
 const TOKEN_KEY = 'cami_fotos_token';
 const SESSION_KEY = 'cami_fotos_session';
@@ -578,5 +579,41 @@ export const api = {
       });
     } catch {}
     saveLocalLogs([]);
+  },
+
+  // App Cover Photo APIs
+  async getAppCoverPhoto(): Promise<string> {
+    try {
+      const res = await request<{ coverPhoto: string | null }>('/api/cover-photo');
+      if (res && res.coverPhoto) {
+        saveStoredCoverPhoto(res.coverPhoto);
+        return res.coverPhoto;
+      }
+    } catch {}
+    return getStoredCoverPhoto();
+  },
+
+  async setAppCoverPhoto(url: string): Promise<string> {
+    saveStoredCoverPhoto(url);
+    try {
+      await request<{ success: boolean; coverPhoto: string }>('/api/cover-photo', {
+        method: 'POST',
+        body: JSON.stringify({ url }),
+      });
+    } catch (e) {
+      console.warn('Server cover photo update failed, using local storage fallback', e);
+    }
+    return url;
+  },
+
+  async resetAppCoverPhoto(): Promise<string> {
+    const defaultUrl = resetStoredCoverPhoto();
+    try {
+      await request<{ success: boolean; coverPhoto: string }>('/api/cover-photo', {
+        method: 'POST',
+        body: JSON.stringify({ url: defaultUrl }),
+      });
+    } catch {}
+    return defaultUrl;
   },
 };
