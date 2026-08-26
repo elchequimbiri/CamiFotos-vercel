@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { Lock, ArrowRight, Shield, Heart, Eye, EyeOff, AlertCircle, Key, Sprout } from 'lucide-react';
 import { UserSession } from '../types';
 import { api } from '../lib/api';
-
-const DEFAULT_COVER_IMAGE = 'https://images.unsplash.com/photo-1517411032315-54ef2cb783bb?auto=format&fit=crop&w=2400&q=85';
+import portadaCamiSunset from '../assets/images/portada_cami_sunset_1787786938649.jpg';
 
 interface LoginViewProps {
   onLoginSuccess: (session: UserSession) => void;
@@ -41,9 +40,9 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
       <div className="relative w-full lg:w-[60%] xl:w-[65%] min-h-[45vh] lg:min-h-screen overflow-hidden flex flex-col justify-between p-6 sm:p-10 lg:p-14 z-10">
         {/* Background high-resolution cover image */}
         <div 
-          className="absolute inset-0 bg-cover bg-[center_top_15%] sm:bg-center transition-transform duration-1000 ease-out scale-100"
+          className="absolute inset-0 bg-cover bg-[center_top_20%] sm:bg-center transition-transform duration-1000 ease-out scale-100"
           style={{
-            backgroundImage: `url(${DEFAULT_COVER_IMAGE})`,
+            backgroundImage: `url(${portadaCamiSunset})`,
           }}
         />
         
@@ -54,16 +53,14 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
         {/* Top bar branding inside cover */}
         <div className="relative z-20 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-emerald-950/70 border border-emerald-700/60 flex items-center justify-center text-emerald-400 shadow-sm">
-              <Sprout className="w-4 h-4 text-emerald-400" />
-            </div>
+            <span className="h-2 w-2 rounded-full bg-emerald-400/90 ring-4 ring-emerald-400/20" />
             <span className="text-xs uppercase tracking-[0.25em] text-zinc-200 font-medium drop-shadow">
               Archivo Privado de Fotografía
             </span>
           </div>
         </div>
 
-        {/* Bottom title overlay on cover */}
+        {/* Bottom title overlay on cover - Sole location of the Logo */}
         <div className="relative z-20 mt-auto max-w-xl">
           <div className="flex items-center space-x-3 mb-2">
             <div className="w-10 h-10 rounded-xl bg-emerald-950/80 border border-emerald-800/80 flex items-center justify-center shadow-lg">
@@ -85,8 +82,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
           
           {/* Header */}
           <div className="space-y-2">
-            <div className="w-11 h-11 rounded-xl bg-emerald-950/50 border border-emerald-800/70 flex items-center justify-center text-emerald-400 shadow-inner mb-4">
-              <Sprout className="w-5 h-5 text-emerald-400" />
+            <div className="w-11 h-11 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-300 shadow-inner mb-4">
+              <Lock className="w-5 h-5" />
             </div>
             <h2 className="text-2xl sm:text-3xl font-normal text-white tracking-tight font-serif">
               Acceso a la Galería
