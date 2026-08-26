@@ -66,9 +66,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <span className="text-lg sm:text-xl font-light text-white font-serif tracking-tight">
                     Cami Fotos
                   </span>
-                  <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono font-normal bg-zinc-800/90 text-zinc-400 border border-zinc-700/50">
-                    4K
-                  </span>
                 </div>
                 <span className="text-[11px] text-zinc-400 tracking-wider font-light">
                   Una historia en imágenes

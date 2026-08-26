@@ -113,7 +113,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
       return;
     }
     if (!photoUrl.trim()) {
-      setStatusMessage({ type: 'error', text: 'Suba un archivo de imagen o ingrese una URL válida.' });
+      setStatusMessage({ type: 'error', text: 'Seleccione un archivo de imagen para subir.' });
       return;
     }
 
@@ -297,29 +297,14 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                   <span>Añadir Fotografía a "{selectedGallery?.name}"</span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* File upload drag drop or select */}
-                  <div className="space-y-2">
-                    <label className="block text-xs text-zinc-300">Archivo de Imagen (Local / Dispositivo)</label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFileUpload}
-                      className="w-full text-xs text-zinc-400 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-amber-500/20 file:text-amber-300 hover:file:bg-amber-500/30 cursor-pointer bg-zinc-950 border border-zinc-800 rounded-xl p-2"
-                    />
-                  </div>
-
-                  {/* Or URL */}
-                  <div className="space-y-2">
-                    <label className="block text-xs text-zinc-300">O Enlace / URL directa de alta resolución</label>
-                    <input
-                      type="url"
-                      value={photoUrl}
-                      onChange={(e) => setPhotoUrl(e.target.value)}
-                      placeholder="https://images.unsplash.com/photo-..."
-                      className="w-full bg-zinc-950 border border-zinc-800 focus:border-amber-400 rounded-xl px-3 py-2 text-xs text-zinc-100 placeholder:text-zinc-600 outline-none"
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <label className="block text-xs text-zinc-300">Archivo de Imagen (Local / Dispositivo)</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileUpload}
+                    className="w-full text-xs text-zinc-400 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-amber-500/20 file:text-amber-300 hover:file:bg-amber-500/30 cursor-pointer bg-zinc-950 border border-zinc-800 rounded-xl p-2.5"
+                  />
                 </div>
 
                 {/* Preview if url exists */}
